@@ -144,7 +144,7 @@
             "Type": "String",
             "Default": "valid-Sec-Grp"
         },
-        "ddncassandraSecurityGroup": {
+        "cassandraSecurityGroup": {
             "Description": "Security group for cassandra app tiers",
             "Type": "String",
             "Default": "valid-Sec-Grp"
