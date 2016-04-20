@@ -4,7 +4,7 @@
     "Mappings":{
     "AccountMap": {
       "325426749784": {
-        "AlertNotifyEmail": "ecom-sbx-us-east-1@target.com",
+        "AlertNotifyEmail": "",
         "Environment": "Dev",
         "ELBName": "",
         "NotificationTopic":"",
