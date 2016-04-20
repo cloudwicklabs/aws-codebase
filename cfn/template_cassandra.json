@@ -1,0 +1,376 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "cassandra Template",
+    "Mappings":{
+    "AccountMap": {
+      "325426749784": {
+        "AlertNotifyEmail": "ecom-sbx-us-east-1@target.com",
+        "Environment": "Dev",
+        "ELBName": "ddn-cassandra-dev",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-east-1e","us-east-1d","us-east-1b","us-east-1a"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "IAMProfile":"",
+        "ChefEnvironment":"",
+        "KeyPair":""
+      },
+      "562186926922": {
+        "AlertNotifyEmail": "",
+        "Environment": "Dev",
+        "ELBName": "",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-west-2a","us-west-2b","us-west-2c"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "IAMProfile":"",
+        "ChefEnvironment":"",
+        "KeyPair":""
+      },
+      "714815996242":{
+        "AlertNotifyEmail": "",
+        "Environment": "Npe",
+        "ELBName": "",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-east-1e","us-east-1d","us-east-1b","us-east-1a"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "ChefEnvironment":"csp1_stage_e1",
+        "IAMProfile":"",
+        "KeyPair":""
+      },
+      "942508335643":{
+        "AlertNotifyEmail": "",
+        "Environment": "Npe",
+        "ELBName": "",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-west-2a","us-west-2b","us-west-2c"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "ChefEnvironment":"",
+        "IAMProfile":"",
+        "KeyPair":""
+      },
+      "136043882679":{
+        "AlertNotifyEmail": "",
+        "Environment": "Prod",
+        "ELBName": "",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-east-1a","us-east-1b","us-east-1c","us-east-1e"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "ChefEnvironment":"",
+        "IAMProfile":"",
+        "KeyPair":""
+      },
+      "402148488131":{
+        "AlertNotifyEmail": "",
+        "Environment": "Prod",
+        "ELBName": "",
+        "NotificationTopic":"",
+        "AvailabilityZones":["us-west-2a","us-west-2b","us-west-2c"],
+        "Subnets":[""],
+        "ChefServer":"",
+        "DatabagSecretURL":"",
+        "ValidationPEMURL":"",
+        "ChefEnvironment":"",
+        "IAMProfile":"",
+        "KeyPair":""
+      }
+    }
+    },
+    "Parameters": {
+        "InstanceType": {
+            "Description": "Instance type for application server",
+            "Type": "String",
+            "Default": "i2.2xlarge",
+            "AllowedValues": [
+                "i2.2xlarge"
+            ]
+
+        },
+        "ComponentName": {
+          "Description": "Application Name",
+          "Type": "String",
+          "AllowedValues": ["cassandra"]
+        },
+        "LogWatchLogGroup" : {
+          "Description" : ":Log watch IAM group",
+          "Type" : "String",
+          "Default" : "$region.params.logWatchLogGroup"
+        },
+        "LogWatchStream" : {
+          "Description" : ":Log watch log streamName",
+          "Type" : "String",
+          "Default" : "varlogboot"
+        },
+        "LogWatchLogFile" : {
+          "Description" : ":Log watch IAM group",
+          "Type" : "String",
+          "Default" : "/var/log/boot.log"
+        },
+        "AutoscalingMinSize": {
+            "Description": "Min Size of Autoscaling Group",
+            "Type": "String",
+            "Default": "6"
+        },
+        "AutoscalingMaxSize": {
+            "Description": "Max Size of Autoscaling Group",
+            "Type": "String",
+            "Default": "6"
+        },
+        "AutoscalingDesiredSize": {
+            "Description": "Desired Size of Autoscaling Group",
+            "Type": "String",
+            "Default": "6"
+        },
+        "AmiId": {
+          "Description": "Ami ID to deploy",
+          "Type": "String",
+          "Default": "$region.params.defaultImageId"
+        },
+        "SharedServicesSG": {
+            "Description": "Security group for Shared Services connectivity",
+            "Type": "String",
+            "Default": "valid-Sec-Grp"
+        },
+        "ddncassandraSecurityGroup": {
+            "Description": "Security group for cassandra app tiers",
+            "Type": "String",
+            "Default": "valid-Sec-Grp"
+        }
+    },
+    "Conditions": {
+        "IsProd": {
+            "Fn::Equals": [{
+                 "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "Environment" ]
+            }, "Prod"]
+        }
+	  },
+    "Resources": {
+        "AlertNotificationTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "Subscription": [{
+                    "Endpoint": {
+                        "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "AlertNotifyEmail" ]
+                    },
+                    "Protocol": "email"
+                }],
+                "TopicName": {
+                    "Fn::Join": ["-", [{
+                            "Ref": "ComponentName"
+                        }, {
+                            "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "Environment" ]
+                        },
+                        "AlertNotify"
+                    ]]
+                },
+                "DisplayName": {
+                    "Fn::Join": ["-", [{
+                        "Ref": "ComponentName"
+                    }, {
+                        "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "Environment" ]
+                    }, "AlertNotify"]]
+                }
+            }
+        },
+        "ServerGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MaxBatchSize": "1",
+                    "MinInstancesInService": "1",
+                    "PauseTime": "PT5M"
+                }
+            },
+            "Properties": {
+                "NotificationConfiguration": {
+                    "TopicARN": {
+                        "Ref": "AlertNotificationTopic"
+                    },
+                    "NotificationTypes": [
+                        "autoscaling:EC2_INSTANCE_LAUNCH",
+                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+                        "autoscaling:EC2_INSTANCE_TERMINATE",
+                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+                    ]
+                },
+                "AvailabilityZones": {
+                    "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "AvailabilityZones" ]
+                },
+                "LaunchConfigurationName": {
+                    "Ref": "ServerLaunchConfig"
+                },
+                "MinSize": {
+                    "Ref": "AutoscalingMinSize"
+                },
+                "MaxSize": {
+                    "Ref": "AutoscalingMaxSize"
+                },
+                "DesiredCapacity": {
+                    "Ref": "AutoscalingDesiredSize"
+                },
+                "VPCZoneIdentifier": {
+                    "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "Subnets" ]
+                },
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Join": ["-", [{
+                            "Ref": "AWS::StackName"
+                        }, {
+                            "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "Environment" ]
+                        }]]
+                    },
+                    "PropagateAtLaunch": "true"
+                  },
+		 {
+                    "Key": "SNSTopicARN",
+                    "Value": {
+                        "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "NotificationTopic" ]
+                    },
+                    "PropagateAtLaunch": "true"
+                  },
+                  {"Key": "Application",
+                   "Value": "cassandra",
+                   "PropagateAtLaunch": "true"}]
+            }
+        },
+        "ServerLaunchConfig": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "BlockDeviceMappings": [
+                    {
+                       "DeviceName": "/dev/sda1",
+                       "Ebs": {
+                          "VolumeSize": 50,
+                          "DeleteOnTermination": true
+                        }
+                    },
+                    {
+                      "DeviceName": "/dev/sdb",
+                      "VirtualName": "ephemeral0"
+                    },
+                    {
+                      "DeviceName": "/dev/sdc",
+                      "VirtualName": "ephemeral1"
+                    }
+                ],
+                "ImageId": {
+                    "Ref": "AmiId"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join" : [ "", [
+                            "{",
+                              "\"logwatch\": ",
+                              "{",
+                                "\"streamName\": \"",  { "Ref": "LogWatchStream"}, "\",",
+                                "\"loggroup\": \"", { "Ref": "LogWatchLogGroup"}, "\",",
+                                "\"logfile\": \"", { "Ref": "LogWatchLogFile"}, "\"",
+                              "},",
+                              "\"csp_data\": ",
+                                "{",
+                                "\"region\": \"", { "Ref": "AWS::Region"}, "\",",
+                                "\"account\": \"", { "Ref": "AWS::AccountId"}, "\",",
+                                "\"stackId\": \"", { "Ref": "AWS::StackId"}, "\",",
+                                "\"stackName\": \"", { "Ref": "AWS::StackName"}, "\"",
+                              "},",
+                              "\"attributes\": {",
+                              "\"environment\": \"", {"Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "ChefEnvironment" ]},"\",",
+                              "\"run_list\": [\"recipe[cassandra]\"]},",
+                              "\"chef_server\": \"", { "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "ChefServer" ] },"\",",
+                              "\"validation_pem_url\": \"", { "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "ValidationPEMURL" ] },"\",",
+                              "\"databag_secret_url\": \"", { "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "DatabagSecretURL" ] },"\"",
+                            "}"
+                          ] ]
+                    }
+                },
+                "SecurityGroups": [
+                  {"Ref": "ddncassandraSecurityGroup"},
+                  {"Ref": "SharedServicesSG"}
+                ],
+                "IamInstanceProfile": {
+                    "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "IAMProfile" ]
+				        },
+                "KeyName": {
+                    "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "KeyPair" ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                }
+            }
+        },
+        "ServerGroupScaleUpPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ServerGroup"
+                },
+                "Cooldown": "60",
+                "ScalingAdjustment": "1"
+            }
+        },
+        "ServerGroupScaleDownPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ServerGroup"
+                },
+                "Cooldown": "60",
+                "ScalingAdjustment": "-1"
+            }
+        },
+        "StatusCheckAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Condition": "IsProd",
+            "Properties": {
+                "AlarmDescription": " Status Check Failed",
+                "MetricName": "StatusCheckFailed",
+                "Namespace": "AWS/EC2",
+                "Statistic": "Maximum",
+                "Period": "60",
+                "EvaluationPeriods": "3",
+                "Threshold": "1",
+                "AlarmActions": [{
+                    "Fn::If": [
+                        "IsProd", {
+                            "Fn::FindInMap" : [ "AccountMap", { "Ref" : "AWS::AccountId" }, "NotificationTopic" ]
+                        }, {
+                            "Ref": "AlertNotificationTopic"
+                        }
+                    ]
+                }],
+                "Dimensions": [{
+                    "Name": "AutoScalingGroupName",
+                    "Value": {
+                        "Ref": "ServerGroup"
+                    }
+                }],
+                "ComparisonOperator": "GreaterThanOrEqualToThreshold"
+            }
+        }
+    },
+    "Outputs": {
+        "ServerGroup": {
+            "Description": "AutoScalingGroup",
+            "Value": { "Ref": "ServerGroup" }
+        }
+    }
+}
