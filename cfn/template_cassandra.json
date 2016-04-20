@@ -3,7 +3,7 @@
     "Description": "cassandra Template",
     "Mappings":{
     "AccountMap": {
-      "325426749784": {
+      "AccountRegion": {
         "AlertNotifyEmail": "",
         "Environment": "Dev",
         "ELBName": "",
@@ -17,7 +17,7 @@
         "ChefEnvironment":"",
         "KeyPair":""
       },
-      "562186926922": {
+      "AccountRegion": {
         "AlertNotifyEmail": "",
         "Environment": "Dev",
         "ELBName": "",
@@ -31,7 +31,7 @@
         "ChefEnvironment":"",
         "KeyPair":""
       },
-      "714815996242":{
+      "AccountRegion":{
         "AlertNotifyEmail": "",
         "Environment": "Npe",
         "ELBName": "",
@@ -45,7 +45,7 @@
         "IAMProfile":"",
         "KeyPair":""
       },
-      "942508335643":{
+      "AccountRegion":{
         "AlertNotifyEmail": "",
         "Environment": "Npe",
         "ELBName": "",
@@ -59,7 +59,7 @@
         "IAMProfile":"",
         "KeyPair":""
       },
-      "136043882679":{
+      "AccountRegion":{
         "AlertNotifyEmail": "",
         "Environment": "Prod",
         "ELBName": "",
@@ -73,7 +73,7 @@
         "IAMProfile":"",
         "KeyPair":""
       },
-      "402148488131":{
+      "AccountRegion":{
         "AlertNotifyEmail": "",
         "Environment": "Prod",
         "ELBName": "",
